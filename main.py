@@ -627,5 +627,5 @@ def main():
     # Start the Bot
     application.run_polling()
 
-if __name__ == '__main__':
-    main() 
+# Vercel için handler değişkenini tanımlayın
+handler = main() 
