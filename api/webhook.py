@@ -655,6 +655,10 @@ def webhook():
     application.process_update(update)
     return 'ok', 200
 
+@app.route('/api/webhook', methods=['GET'])
+def get_webhook():
+    return "Webhook is active", 200
+
 def main() -> None:
     """Run the bot."""
     application.add_handler(CommandHandler("start", start_command))
