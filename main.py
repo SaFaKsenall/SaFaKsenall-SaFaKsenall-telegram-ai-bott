@@ -624,8 +624,18 @@ def main():
     application.add_handler(MessageHandler(filters.TEXT | filters.VOICE, message_handler))
     application.add_handler(CommandHandler("homepage", homepage))
 
-    # Start the Bot
-    application.run_polling()
+    return application
 
 # Vercel için handler değişkenini tanımlayın
-handler = main() 
+app = main()
+
+# Webhook için gerekli fonksiyon
+async def webhook_handler(request):
+    """Handle incoming webhook requests"""
+    if request.method == "POST":
+        await app.update_queue.put(Update.de_json(await request.json(), app.bot))
+        return {"statusCode": 200, "body": "ok"}
+    return {"statusCode": 405, "body": "Method not allowed"}
+
+# Vercel için handler
+handler = webhook_handler 
