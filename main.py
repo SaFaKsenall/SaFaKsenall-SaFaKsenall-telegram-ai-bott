@@ -256,11 +256,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    welcome_message = f"""
-Merhaba, {update.effective_user.username or 'misafir'}! Ben çok yetenekli bir yapay zeka botuyum! 🤖
-
-Lütfen kullanmak istediğiniz özelliği seçin:
-"""
+    welcome_message = f"Merhaba, {update.effective_user.username or 'misafir'}! Ben çok yetenekli bir yapay zeka botuyum! 🤖\n\nLütfen kullanmak istediğiniz özelliği seçin:"
     await update.message.reply_text(welcome_message, reply_markup=reply_markup)
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
