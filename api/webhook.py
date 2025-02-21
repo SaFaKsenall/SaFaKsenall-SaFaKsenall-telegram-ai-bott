@@ -1,20 +1,26 @@
 import os
-import sys
 from flask import Flask, request, Response
 from telegram import Update
-from main import app  # main.py'daki app'i içe aktar
+from telegram.ext import ApplicationBuilder, ContextTypes
 
 # Flask uygulamasını oluştur
 flask_app = Flask(__name__)
 
+# Telegram bot token'ınızı alın
+TOKEN = os.getenv("TELEGRAM_TOKEN")
+
+# Bot uygulamasını oluşturun
+application = ApplicationBuilder().token(TOKEN).build()
+
+# Webhook endpoint
 @flask_app.route('/api/webhook', methods=['POST'])
 async def webhook():
     """Handle incoming webhook requests"""
     if request.method == "POST":
         try:
             # Telegram'dan gelen güncellemeyi al
-            update = Update.de_json(request.get_json(force=True), app.bot)
-            await app.update_queue.put(update)  # Güncellemeyi işleme al
+            update = Update.de_json(request.get_json(force=True), application.bot)
+            await application.update_queue.put(update)  # Güncellemeyi işleme al
             return Response('ok', status=200)  # Başarılı yanıt
         except Exception as e:
             print(f"Error in webhook: {str(e)}")
