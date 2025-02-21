@@ -15,6 +15,7 @@ import speech_recognition as sr
 import tempfile
 import soundfile as sf
 import json
+from flask import Flask, request, Response
 
 # Load environment variables
 load_dotenv()
@@ -43,6 +44,16 @@ MUSIC_GEN_URL = "https://api-inference.huggingface.co/models/facebook/musicgen-s
 
 # User states dictionary to track what feature each user is using
 user_states = {}
+
+# Flask uygulamasını oluştur
+app = Flask(__name__)
+
+# Telegram bot uygulamasını oluştur
+token = os.getenv("TELEGRAM_TOKEN")
+if not token:
+    raise ValueError("TELEGRAM_TOKEN bulunamadı!")
+
+application = Application.builder().token(token).build()
 
 async def transcribe_audio(audio_bytes):
     """Transcribe audio using Google Speech Recognition"""
@@ -609,33 +620,22 @@ async def homepage(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     await update.message.reply_text(welcome_message, reply_markup=reply_markup)
 
-def main():
-    """Start the bot"""
-    # Create the Application and pass it your bot's token
-    token = os.getenv("TELEGRAM_TOKEN")
-    if not token:
-        raise ValueError("TELEGRAM_TOKEN bulunamadı! Lütfen .env dosyasını kontrol edin.")
-    
-    application = Application.builder().token(token).build()
-
-    # Add handlers
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CallbackQueryHandler(button_handler))
-    application.add_handler(MessageHandler(filters.TEXT | filters.VOICE, message_handler))
-    application.add_handler(CommandHandler("homepage", homepage))
-
-    return application
-
-# Vercel için handler değişkenini tanımlayın
-app = main()
-
-# Webhook için gerekli fonksiyon
-async def webhook_handler(request):
+# Webhook endpoint'i
+@app.route('/api/webhook', methods=['POST'])
+async def webhook():
     """Handle incoming webhook requests"""
     if request.method == "POST":
-        await app.update_queue.put(Update.de_json(await request.json(), app.bot))
-        return {"statusCode": 200, "body": "ok"}
-    return {"statusCode": 405, "body": "Method not allowed"}
+        try:
+            # Telegram'dan gelen güncellemeyi al
+            update = Update.de_json(request.get_json(force=True), application.bot)
+            await application.update_queue.put(update)
+            return Response('ok', status=200)
+        except Exception as e:
+            logger.error(f"Webhook error: {str(e)}")
+            return Response(str(e), status=500)
+    return Response('Method not allowed', status=405)
 
 # Vercel için handler
-handler = webhook_handler 
+handler = app
+
+# Not: main() fonksiyonunu ve if __name__ == "__main__": bloğunu kaldırın 
