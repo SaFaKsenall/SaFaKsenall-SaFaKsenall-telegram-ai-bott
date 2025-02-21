@@ -1,7 +1,7 @@
 import os
 from flask import Flask, request, Response
 from telegram import Update
-from telegram.ext import ApplicationBuilder, ContextTypes
+from telegram.ext import ApplicationBuilder
 
 # Flask uygulamasını oluştur
 flask_app = Flask(__name__)
@@ -32,6 +32,9 @@ def webhook_info():
     """Handle GET requests to check if the webhook is active"""
     return Response('Webhook is active', status=200)  # Webhook'un aktif olduğunu belirt
 
+# Vercel için handler değişkenini tanımlayın
+handler = flask_app  # Flask uygulamasını handler olarak ayarlayın
+
 if __name__ == '__main__':
     # Flask uygulamasını başlat
-    flask_app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000))) 
+    flask_app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
