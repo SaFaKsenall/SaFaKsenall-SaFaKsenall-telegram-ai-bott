@@ -18,4 +18,4 @@ This project is protected by copyright laws. All rights reserved. Unauthorized r
 To run this bot, you need to have Python installed along with the required dependencies listed in `requirements.txt`.
 
 ## License
-This project is not licensed for public use. Please contact the author for more information. 
+This project is not licensed for public use. Please contact the author for more information. # telegram-ai-bot
