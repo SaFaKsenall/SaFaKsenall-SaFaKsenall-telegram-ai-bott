@@ -51,4 +51,5 @@ class handler(BaseHTTPRequestHandler):
 
 # Botu başlatın
 if __name__ == "__main__":
+    application.add_handler(CommandHandler("start", start))
     app.run(port=int(os.environ.get("PORT", 5000)))
