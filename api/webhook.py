@@ -646,23 +646,14 @@ async def homepage(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     await update.message.reply_text(welcome_message, reply_markup=reply_markup)
 
-# Webhook endpoint'i
+# Update the webhook endpoint to use Flask's request handling
 @app.route('/api/webhook', methods=['POST'])
-async def webhook():
+def webhook():
     """Handle incoming webhook requests"""
-    if request.method == "POST":
-        try:
-            # Telegram'dan gelen güncellemeyi al
-            update = Update.de_json(request.get_json(force=True), application.bot)
-            await application.update_queue.put(update)
-            return Response('ok', status=200)
-        except Exception as e:
-            logger.error(f"Webhook error: {str(e)}")
-            return Response(str(e), status=500)
-    return Response('Method not allowed', status=405)
-
-# Vercel için handler
-handler = app
+    logger.info("Webhook update received")
+    update = Update.de_json(request.get_json(force=True), application.bot)
+    application.process_update(update)
+    return 'ok', 200
 
 def main() -> None:
     """Run the bot."""
