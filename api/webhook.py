@@ -1,27 +1,31 @@
 import os
-from flask import Flask, request
+import sys
+from flask import Flask, request, Response
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
+from main import app  # main.py'daki app'i içe aktar
 
-app = Flask(__name__)
+# Flask uygulamasını oluştur
+flask_app = Flask(__name__)
 
-# Telegram bot token'ınızı alın
-TOKEN = os.getenv("TELEGRAM_TOKEN")
+@flask_app.route('/api/webhook', methods=['POST'])
+async def webhook():
+    """Handle incoming webhook requests"""
+    if request.method == "POST":
+        try:
+            # Telegram'dan gelen güncellemeyi al
+            update = Update.de_json(request.get_json(force=True), app.bot)
+            await app.update_queue.put(update)  # Güncellemeyi işleme al
+            return Response('ok', status=200)  # Başarılı yanıt
+        except Exception as e:
+            print(f"Error in webhook: {str(e)}")
+            return Response(str(e), status=500)  # Hata durumunda yanıt
+    return Response('Method not allowed', status=405)  # Diğer metodlar için yanıt
 
-# Bot uygulamasını oluşturun
-application = ApplicationBuilder().token(TOKEN).build()
+@flask_app.route('/api/webhook', methods=['GET'])
+def webhook_info():
+    """Handle GET requests to check if the webhook is active"""
+    return Response('Webhook is active', status=200)  # Webhook'un aktif olduğunu belirt
 
-# Komut işleyicileri
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Bot başlatıldı!")
-
-# Webhook endpoint
-@app.route('/api/webhook', methods=['POST'])
-def webhook():
-    update = Update.de_json(request.get_json(force=True), application.bot)
-    application.process_update(update)
-    return 'ok', 200
-
-# Botu başlatın
-if __name__ == "__main__":
-    app.run(port=int(os.environ.get("PORT", 5000)))
+if __name__ == '__main__':
+    # Flask uygulamasını başlat
+    flask_app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000))) 
