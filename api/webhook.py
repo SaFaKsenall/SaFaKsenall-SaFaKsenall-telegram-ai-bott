@@ -16,6 +16,8 @@ import tempfile
 import soundfile as sf
 import json
 from flask import Flask, request, Response
+import secrets
+import string
 
 # Load environment variables
 load_dotenv()
@@ -54,6 +56,21 @@ if not token:
     raise ValueError("TELEGRAM_TOKEN bulunamadı!")
 
 application = Application.builder().token(token).build()
+
+# Yöntem 1: Random string oluşturma
+secret_token = secrets.token_hex(32)  # 64 karakterlik güvenli bir token oluşturur
+
+def generate_secure_token(length=32):
+    # Kullanılacak karakterler
+    alphabet = string.ascii_letters + string.digits + string.punctuation
+    
+    # Güvenli token oluşturma
+    token = ''.join(secrets.choice(alphabet) for i in range(length))
+    return token
+
+# Token oluştur
+secure_token = generate_secure_token()
+print(f"Güvenli Token: {secure_token}")
 
 async def transcribe_audio(audio_bytes):
     """Transcribe audio using Google Speech Recognition"""
@@ -652,6 +669,11 @@ def webhook():
     """Handle incoming webhook requests"""
     try:
         logger.info("Webhook update received")
+        
+        # Gelen isteğin header'ında token kontrolü
+        auth_header = request.headers.get('Authorization')
+        if auth_header != f'Bearer {os.getenv("SECRET_TOKEN")}':
+            return Response('Unauthorized', status=401)
         
         # Log the raw request data
         logger.info(f"Request Headers: {dict(request.headers)}")
