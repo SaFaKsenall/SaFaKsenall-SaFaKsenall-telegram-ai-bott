@@ -18,6 +18,8 @@ import json
 from flask import Flask, request, Response
 import secrets
 import string
+from hypercorn.config import Config
+from hypercorn.server import serve
 
 # Load environment variables
 load_dotenv()
@@ -665,7 +667,7 @@ async def homepage(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Update the webhook endpoint to use Flask's request handling
 @app.route('/api/webhook', methods=['POST'])
-def webhook():
+async def webhook():
     """Handle incoming webhook requests"""
     try:
         logger.info("Webhook update received")
@@ -682,7 +684,9 @@ def webhook():
         # İşlemler devam eder...
         update_data = request.get_json(force=True)
         update = Update.de_json(update_data, application.bot)
-        application.process_update(update)
+        
+        # Burayı await ile çağırın
+        await application.process_update(update)
         return Response('ok', status=200)
         
     except Exception as e:
@@ -720,5 +724,6 @@ def main() -> None:
         logger.error(f"Error starting bot: {str(e)}", exc_info=True)
 
 if __name__ == "__main__":
-    main()
-    app.run(port=int(os.environ.get("PORT", 5000)))
+    config = Config()
+    config.bind = [f"0.0.0.0:{int(os.environ.get('PORT', 5000))}"]
+    asyncio.run(serve(app, config))
