@@ -9,4 +9,5 @@ SpeechRecognition==3.10.1
 soundfile==0.12.1 
 hypercorn==0.15.0
 Flask==2.0.3
+Werkzeug==2.0.3
 
