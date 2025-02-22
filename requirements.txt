@@ -8,3 +8,4 @@ gTTS==2.5.1
 SpeechRecognition==3.10.1
 soundfile==0.12.1 
 hypercorn==0.15.0
+flask
