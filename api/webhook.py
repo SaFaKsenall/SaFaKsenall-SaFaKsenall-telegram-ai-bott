@@ -652,29 +652,54 @@ def webhook():
     """Handle incoming webhook requests"""
     try:
         logger.info("Webhook update received")
-        update = Update.de_json(request.get_json(force=True), application.bot)
         
-        # Log the entire update for debugging
-        logger.info(f"Received update: {update.to_dict()}")
+        # Log the raw request data
+        logger.info(f"Request Headers: {dict(request.headers)}")
+        logger.info(f"Request Data: {request.get_data(as_text=True)}")
         
+        # Parse and log the update
+        update_data = request.get_json(force=True)
+        logger.info(f"Parsed Update Data: {json.dumps(update_data, indent=2)}")
+        
+        update = Update.de_json(update_data, application.bot)
+        logger.info(f"Telegram Update Object: {update.to_dict()}")
+        
+        # Process the update
         application.process_update(update)
         return Response('ok', status=200)
     except Exception as e:
-        logger.error(f"Error in webhook: {str(e)}")
+        logger.error(f"Error in webhook: {str(e)}", exc_info=True)
         return Response(str(e), status=500)
 
 @app.route('/api/webhook', methods=['GET'])
 def get_webhook():
-    return "Webhook is active", 200
+    """Handle GET requests to webhook"""
+    logger.info("GET request received at webhook endpoint")
+    return Response("Webhook is active", status=200)
 
+# Add these lines before the main() function
+def setup_handlers():
+    """Set up message handlers"""
+    logger.info("Setting up message handlers")
+    try:
+        application.add_handler(CommandHandler("start", start_command))
+        application.add_handler(CommandHandler("anasayfa", homepage))
+        application.add_handler(CallbackQueryHandler(button_handler))
+        application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
+        application.add_handler(MessageHandler(filters.VOICE, message_handler))
+        logger.info("Message handlers set up successfully")
+    except Exception as e:
+        logger.error(f"Error setting up handlers: {str(e)}", exc_info=True)
+
+# Update the main() function
 def main() -> None:
     """Run the bot."""
-    application.add_handler(CommandHandler("start", start_command))
-    application.add_handler(CommandHandler("anasayfa", homepage))
-    application.add_handler(CallbackQueryHandler(button_handler))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
-    application.add_handler(MessageHandler(filters.VOICE, message_handler))
-
+    logger.info("Starting the bot")
+    try:
+        setup_handlers()
+        logger.info("Bot started successfully")
+    except Exception as e:
+        logger.error(f"Error starting bot: {str(e)}", exc_info=True)
 
 if __name__ == "__main__":
     main()
