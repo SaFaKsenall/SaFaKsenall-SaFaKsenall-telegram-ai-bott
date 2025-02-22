@@ -672,23 +672,19 @@ def webhook():
         
         # Gelen isteğin header'ında token kontrolü
         auth_header = request.headers.get('Authorization')
-        if auth_header != f'Bearer {os.getenv("SECRET_TOKEN")}':
+        expected_token = os.getenv("SECRET_TOKEN")  # .env dosyasından alıyoruz
+        
+        # Token kontrolü
+        if not auth_header or auth_header != f'Bearer {expected_token}':
+            logger.warning("Unauthorized access attempt")
             return Response('Unauthorized', status=401)
         
-        # Log the raw request data
-        logger.info(f"Request Headers: {dict(request.headers)}")
-        logger.info(f"Request Data: {request.get_data(as_text=True)}")
-        
-        # Parse and log the update
+        # İşlemler devam eder...
         update_data = request.get_json(force=True)
-        logger.info(f"Parsed Update Data: {json.dumps(update_data, indent=2)}")
-        
         update = Update.de_json(update_data, application.bot)
-        logger.info(f"Telegram Update Object: {update.to_dict()}")
-        
-        # Process the update
         application.process_update(update)
         return Response('ok', status=200)
+        
     except Exception as e:
         logger.error(f"Error in webhook: {str(e)}", exc_info=True)
         return Response(str(e), status=500)
