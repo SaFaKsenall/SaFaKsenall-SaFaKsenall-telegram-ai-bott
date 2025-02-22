@@ -650,10 +650,18 @@ async def homepage(update: Update, context: ContextTypes.DEFAULT_TYPE):
 @app.route('/api/webhook', methods=['POST'])
 def webhook():
     """Handle incoming webhook requests"""
-    logger.info("Webhook update received")
-    update = Update.de_json(request.get_json(force=True), application.bot)
-    application.process_update(update)
-    return 'ok', 200
+    try:
+        logger.info("Webhook update received")
+        update = Update.de_json(request.get_json(force=True), application.bot)
+        
+        # Log the entire update for debugging
+        logger.info(f"Received update: {update.to_dict()}")
+        
+        application.process_update(update)
+        return Response('ok', status=200)
+    except Exception as e:
+        logger.error(f"Error in webhook: {str(e)}")
+        return Response(str(e), status=500)
 
 @app.route('/api/webhook', methods=['GET'])
 def get_webhook():
